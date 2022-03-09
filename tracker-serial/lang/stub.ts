@@ -11,11 +11,15 @@
 <context>
     <name>test_ui</name>
     <message>
-        <source>Sine wave</source>
+        <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pressing &quot;Abort&quot; will immediately crash the application.</source>
+        <source>Serial port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Serial Tracker COM settings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
