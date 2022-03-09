@@ -7,47 +7,67 @@
  */
 
 #include "serial.h"
+#include "serialportreader.h"
 #include "api/plugin-api.hpp"
 #include "compat/math-imports.hpp"
 
 #include <QPushButton>
+#include <QStringList>
+#include <QTextStream>
 
 #include <cmath>
 #include <QDebug>
-
-static const double incr[3] =
-{
-    10, 5, 3
-};
-
-static const double max_values[3] = {
-    180, 2, 3,
-};
 
 serial_tracker::serial_tracker() = default;
 serial_tracker::~serial_tracker() = default;
 
 module_status serial_tracker::start_tracker(QFrame*)
 {
+    t.Log("Starting Tracker");
+    serial_result ret = t.init_serial_port();
     t.start();
+
+    timer.start();
     return {};
 }
 
 void serial_tracker::data(double *data)
 {
-    const double dt = t.elapsed_seconds();
-    t.start();
+    QString strData = t.getData();
+    bool dataValid = false;
+    double numbers[6] = {};
+    if (!strData.isEmpty()) {
+        QStringList elems = strData.split(',');
+        if (elems.size() == 6) {
+            for (int i = 0; i < 6; i++)
+            {
+                bool ok;
+                numbers[i] = elems[i].toDouble(&ok);
+                if (!ok) {
+                    qDebug() << "   FORMAT error: " << elems[i];
+                    break;
+                }
+            }
+            dataValid = true;
+        }
+        else {
+            qDebug() << "Expected 6 elements, got: " << elems.size() << " from " << strData;
+        }
+    }
 
-    for (int i = 0; i < 3; i++)
+    if (dataValid) {
+        for (int i = 0; i < 6; i++)
+        {
+            last[i] = numbers[i];
+        }
+        qDebug() << QString("Using data: %1 %2 %3 %4 %5 %6")
+                .arg(last[0]).arg(last[1]).arg(last[2])
+                .arg(last[3]).arg(last[4]).arg(last[5]);
+    }
+
+    for (int i = 0; i < 6; i++)
     {
-        double last_ = last[i];
-        double max = max_values[i] * 2;
-        double incr_ = incr[i];
-        double x = fmod(last_ + incr_ * dt, max);
-        last[i] = x;
-        if (x > max_values[i])
-            x = -max + x;
-        data[i+3] = x;
+        data[i] = last[i];
     }
 }
 

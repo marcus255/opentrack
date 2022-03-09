@@ -1,8 +1,10 @@
 #pragma once
 #include "ui_serial.h"
+#include "thread.hpp"
 #include "api/plugin-api.hpp"
 #include "compat/timer.hpp"
 #include "compat/macros.hpp"
+#include <QSerialPort>
 
 #include <cmath>
 
@@ -16,7 +18,9 @@ public:
 
 private:
     double last[6] {};
-    Timer t;
+    Timer timer;
+    serial_thread t;
+    QSerialPort serialPort;
 };
 
 class test_dialog : public ITrackerDialog
