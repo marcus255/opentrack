@@ -1,10 +1,11 @@
 #pragma once
-#include "ui_serial.h"
+#include "ui_serial_tracker_controls.h"
 #include "thread.hpp"
 #include "api/plugin-api.hpp"
 #include "compat/timer.hpp"
 #include "compat/macros.hpp"
 #include <QSerialPort>
+#include <QSerialPortInfo>
 
 #include <cmath>
 
@@ -23,21 +24,7 @@ private:
     QSerialPort serialPort;
 };
 
-class test_dialog : public ITrackerDialog
-{
-    Q_OBJECT
-
-    Ui::test_ui ui;
-public:
-    test_dialog();
-    void register_tracker(ITracker *) override {}
-    void unregister_tracker() override {}
-private slots:
-    void doOK();
-    void doCancel();
-};
-
-class test_metadata : public Metadata
+class serial_metadata : public Metadata
 {
     Q_OBJECT
 
