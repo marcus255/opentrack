@@ -1,5 +1,6 @@
 #pragma once
 
+#include "serial_tracker_settings.h"
 #include <QSerialPort>
 #include <QThread>
 #include <QMutex>
@@ -33,6 +34,7 @@ class serial_thread : public QThread
     QByteArray data_read;
     QString current_data;
     serial_t com_port;
+    TrackerSettings s;
     QStringList values;
     char buf[1024];
 

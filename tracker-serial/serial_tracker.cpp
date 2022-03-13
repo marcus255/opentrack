@@ -6,8 +6,8 @@
  * notice appear in all copies.
  */
 
-#include "serial.h"
-#include "serialportreader.h"
+#include "serial_tracker.h"
+#include "serial_tracker_dialog.h"
 #include "api/plugin-api.hpp"
 #include "compat/math-imports.hpp"
 
@@ -39,19 +39,20 @@ void serial_tracker::data(double *data)
     if (!strData.isEmpty()) {
         QStringList elems = strData.split(',');
         if (elems.size() == 6) {
+            dataValid = true;
             for (int i = 0; i < 6; i++)
             {
                 bool ok;
                 numbers[i] = elems[i].toDouble(&ok);
                 if (!ok) {
-                    qDebug() << "   FORMAT error: " << elems[i];
+                    qWarning() << "Format error at" << i << "element:" << strData;
+                    dataValid = false;
                     break;
                 }
             }
-            dataValid = true;
         }
         else {
-            qDebug() << "Expected 6 elements, got: " << elems.size() << " from " << strData;
+            qWarning() << "Expected 6 elements, got:" << elems.size() << "from line:" << strData;
         }
     }
 
@@ -64,6 +65,10 @@ void serial_tracker::data(double *data)
                 .arg(last[0]).arg(last[1]).arg(last[2])
                 .arg(last[3]).arg(last[4]).arg(last[5]);
     }
+    else if (!strData.isEmpty())
+    {
+        qWarning() << "Correct data format is \"x,y,z,yaw,pitch,roll\\n\", values can be floats or integers";
+    }
 
     for (int i = 0; i < 6; i++)
     {
@@ -71,28 +76,4 @@ void serial_tracker::data(double *data)
     }
 }
 
-test_dialog::test_dialog() // NOLINT(cppcoreguidelines-pro-type-member-init)
-{
-    ui.setupUi(this);
-
-    connect(ui.buttonBox, &QDialogButtonBox::clicked, [this](QAbstractButton* btn) {
-        if (btn == ui.buttonBox->button(QDialogButtonBox::Abort))
-            *(volatile int*)nullptr /*NOLINT*/ = 0;
-    });
-
-    connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(doOK()));
-    connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));
-}
-
-void test_dialog::doOK()
-{
-    //s.b->save();
-    close();
-}
-
-void test_dialog::doCancel()
-{
-    close();
-}
-
-OPENTRACK_DECLARE_TRACKER(serial_tracker, test_dialog, test_metadata)
+OPENTRACK_DECLARE_TRACKER(serial_tracker, serial_tracker_dialog, serial_metadata)

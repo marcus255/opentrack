@@ -11,6 +11,8 @@
 
 #include <QDebug>
 
+#define MAX_DATA_LINE_SIZE 100
+
 
 void serial_thread::Log(const QString& message)
 {
@@ -53,40 +55,43 @@ void serial_thread::run()
 serial_result serial_thread::init_serial_port_impl()
 {
     Log(tr("Setting serial port name"));
-    const QString serialPortName = "COM2";
+    const QString serialPortName = s.QSerialPortName;
+    qDebug() << "Port name:" << serialPortName;
     com_port.setPortName(serialPortName);
 
     Log(tr("Opening serial port"));
-    if (com_port.open(QIODevice::ReadWrite))
+    if (com_port.open(QIODevice::ReadOnly))
     {
         Log(tr("Port Open"));
-        if (
-            com_port.setBaudRate(QSerialPort::Baud9600)
-            && com_port.setDataBits(QSerialPort::Data8)
-            && com_port.setParity(QSerialPort::NoParity)
-            && com_port.setStopBits(QSerialPort::OneStop)
-//            && com_port.setFlowControl(QSerialPort::HardwareControl)
-            && com_port.clear(QSerialPort::AllDirections)
-           )
+        if (com_port.setBaudRate((QSerialPort::BaudRate)s.pBaudRate)
+                && com_port.setDataBits((QSerialPort::DataBits)s.pDataBits)
+                && com_port.setParity((QSerialPort::Parity)s.pParity)
+                && com_port.setStopBits((QSerialPort::StopBits)s.pStopBits)
+                && com_port.setFlowControl((QSerialPort::FlowControl)s.pFlowControl)
+                && com_port.clear(QSerialPort::AllDirections))
         {
             Log(tr("Port Parameters set"));
-            qDebug()  << QTime::currentTime()
-                      << " HAT OPEN on"
-                      << com_port.portName()
-                      << com_port.baudRate()
-                      << com_port.dataBits()
-                      << com_port.parity()
-                      << com_port.stopBits()
-                      << com_port.flowControl();
+            qDebug() << com_port.portName()
+                     << com_port.baudRate()
+                     << com_port.dataBits()
+                     << com_port.parity()
+                     << com_port.stopBits()
+                     << com_port.flowControl();
             return serial_result();
         }
         else
         {
+            Log(tr("Failed to set port parameters"));
+            qDebug() << com_port.errorString();
             return serial_result(result_error, com_port.errorString());
         }
     }
     else
+    {
+        Log(tr("Failed to open serial port"));
+        qDebug() << com_port.errorString();
         return serial_result(result_open_error, com_port.errorString());
+    }
 }
 
 QString serial_thread::getData()
@@ -101,35 +106,27 @@ QString serial_thread::getData()
 
 void serial_thread::on_serial_read()
 {
-    const int sz = (int)com_port.readLine(buf, sizeof(buf));
-//    qDebug() << QString("Got %1 bytes").arg(sz);
-    if (sz > 0)
+    uint64_t bytes = com_port.readLine(buf, sizeof(buf));
+    if (bytes > 0)
     {
-        if (buf[sz - 1] == '\n') {
-            buf[sz - 1] = '\0';
-//            qDebug() << "Appending " << strlen(buf);
+        if (buf[bytes - 1] == '\n') {
+            buf[bytes - 1] = '\0';
             current_data.append(buf);
-            qDebug() << "data ready: " << current_data;
             data_mtx.lock();
             values.append(current_data);
             data_mtx.unlock();
             current_data.clear();
         }
-        else if (sz < 1024){
-            buf[sz] = '\0';
+        else {
+            buf[bytes] = '\0';
             current_data.append(buf);
+            if (current_data.size() >= MAX_DATA_LINE_SIZE)
+            {
+                qWarning() << "Invalid data format. Got" << current_data.size()
+                           << "bytes of data but no newline char (\\n). Discarding data."
+                           << "Correct data format is \"x,y,z,yaw,pitch,roll\\n\", values can be floats or integers";
+                current_data.clear();
+            }
         }
-    }
-
-
-    if (sz <= 0)
-    {
-        // qt can fire QSerialPort::readyRead() needlessly, causing a busy loop.
-        // see https://github.com/opentrack/opentrack/issues/327#issuecomment-207941003
-
-        // this probably happens with flaky BT/usb-to-serial converters (?)
-//        constexpr int hz = 90;
-//        constexpr int ms = 1000/hz;
-//        portable::sleep(ms);
     }
 }
