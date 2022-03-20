@@ -5,7 +5,8 @@ except ModuleNotFoundError:
     print('"serial" module not found, use "pip install pyserial"')
     exit(1)
     
-integer_data = True
+integer_data = False
+reordered_format = True
 
 serialPort = serial.Serial(
     port="COM1", baudrate=9600, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE
@@ -47,8 +48,11 @@ while True:
         values[i] = values[i] + directions[i] * inc
         if values[i] >= limits[i] or values[i] <= (-1 * limits[i]):
             directions[i] *= -1
+    if reordered_format:
+        # yaw,pitch,x,y,z,roll
+        reordered = [values[3], values[4], values[0], values[1], values[2], values[5]]
     format_str = '{:d}' if integer_data else '{:.3f}'
-    data = ','.join([format_str.format(round(num) if integer_data else num) for num in values])
+    data = ','.join([format_str.format(round(num) if integer_data else num) for num in (reordered if reordered_format else values)])
     res = serialPort.write((data + '\n').encode())
     print(f'Sending {res} bytes: {data}')
     time.sleep(0.1)

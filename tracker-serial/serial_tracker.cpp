@@ -23,7 +23,7 @@ serial_tracker::~serial_tracker() = default;
 
 module_status serial_tracker::start_tracker(QFrame*)
 {
-    t.Log("Starting Tracker");
+    t.Log("Starting Tracker with data format 'yaw,pitch,x,y,z,roll\n'");
     serial_result ret = t.init_serial_port();
     t.start();
 
@@ -67,13 +67,19 @@ void serial_tracker::data(double *data)
     }
     else if (!strData.isEmpty())
     {
-        qWarning() << "Correct data format is \"x,y,z,yaw,pitch,roll\\n\", values can be floats or integers";
+        qWarning() << "Correct data format is \"yaw,pitch,x,y,z,roll\\n\", values can be floats or integers";
     }
 
     for (int i = 0; i < 6; i++)
     {
         data[i] = last[i];
     }
+    data[0] = last[2]; // x
+    data[1] = last[3]; // y
+    data[2] = last[4]; // z
+    data[3] = last[0]; // yaw
+    data[4] = last[1]; // pitch
+    data[5] = last[5]; // roll
 }
 
 OPENTRACK_DECLARE_TRACKER(serial_tracker, serial_tracker_dialog, serial_metadata)

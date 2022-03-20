@@ -125,7 +125,7 @@ void serial_thread::on_serial_read()
             {
                 qWarning() << "Invalid data format. Got" << current_data.size()
                            << "bytes of data but no newline char (\\n). Discarding data."
-                           << "Correct data format is \"x,y,z,yaw,pitch,roll\\n\", values can be floats or integers";
+                           << "Correct data format is \"yaw,pitch,x,y,z,roll\\n\", values can be floats or integers";
                 current_data.clear();
             }
         }
