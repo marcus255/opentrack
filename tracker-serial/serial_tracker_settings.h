@@ -29,6 +29,6 @@ struct TrackerSettings : opts
         pDataBits(b, "data-bits", QSerialPort::Data8),
         pParity(b, "parity", QSerialPort::NoParity),
         pStopBits(b, "stop-bits", QSerialPort::OneStop),
-        pFlowControl(b, "flow-control", QSerialPort::HardwareControl)
+        pFlowControl(b, "flow-control", QSerialPort::NoFlowControl)
     {}
 };

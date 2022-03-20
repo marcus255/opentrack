@@ -60,10 +60,11 @@ serial_result serial_thread::init_serial_port_impl()
     com_port.setPortName(serialPortName);
 
     Log(tr("Opening serial port"));
-    if (com_port.open(QIODevice::ReadOnly))
+    if (com_port.open(QIODevice::ReadWrite))
     {
         Log(tr("Port Open"));
-        if (com_port.setBaudRate((QSerialPort::BaudRate)s.pBaudRate)
+        if (com_port.setDataTerminalReady(true)
+                && com_port.setBaudRate((QSerialPort::BaudRate)s.pBaudRate)
                 && com_port.setDataBits((QSerialPort::DataBits)s.pDataBits)
                 && com_port.setParity((QSerialPort::Parity)s.pParity)
                 && com_port.setStopBits((QSerialPort::StopBits)s.pStopBits)
