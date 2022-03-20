@@ -23,7 +23,7 @@ serial_tracker::~serial_tracker() = default;
 
 module_status serial_tracker::start_tracker(QFrame*)
 {
-    t.Log("Starting Tracker");
+    t.Log("Starting Tracker with data format 'yaw,pitch,x,y,z,roll\n'");
     serial_result ret = t.init_serial_port();
     t.start();
 
